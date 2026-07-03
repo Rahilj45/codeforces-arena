@@ -19,7 +19,11 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const redisConnection = new IORedis(redisUrl, { maxRetriesPerRequest: null });
+const redisOptions = { maxRetriesPerRequest: null };
+if (redisUrl.startsWith('rediss://')) {
+    redisOptions.tls = { rejectUnauthorized: false };
+}
+const redisConnection = new IORedis(redisUrl, redisOptions);
 
 const verificationQueue = new Queue('cf-verification', {
     connection: redisConnection,
