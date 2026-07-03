@@ -19,7 +19,11 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 const rawRedisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const redisUrl = rawRedisUrl.replace(/^["']|["']$/g, '').trim();
+let redisUrl = rawRedisUrl.replace(/^["']|["']$/g, '').trim();
+
+if (redisUrl.startsWith('//')) {
+    redisUrl = 'rediss:' + redisUrl;
+}
 
 const redisOptions = { maxRetriesPerRequest: null };
 if (redisUrl.startsWith('rediss://') || redisUrl.includes('upstash.io')) {
