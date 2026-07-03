@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import LiveBackground from './components/LiveBackground';
 import TiltCard from './components/TiltCard';
 import { playSound } from './utils/sounds';
+import UpdatePassword from './components/UpdatePassword';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 const socket = io(BACKEND_URL);
@@ -19,6 +20,7 @@ function App() {
   const [session, setSession] = useState(null);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [needsCFLink, setNeedsCFLink] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   const [handle, setHandle] = useState('');
   const [roomId, setRoomId] = useState('');
@@ -73,9 +75,12 @@ function App() {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
-      if (session) {
+      
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryMode(true);
+      } else if (session) {
         const cfHandle = session.user.user_metadata?.cf_handle;
         if (!cfHandle) {
           setNeedsCFLink(true);
@@ -318,6 +323,10 @@ function App() {
 
   if (isCheckingSession) {
     return <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white font-bold text-xl"><Loader2 className="animate-spin mr-3"/> Loading...</div>;
+  }
+
+  if (recoveryMode) {
+    return <UpdatePassword onPasswordUpdated={() => setRecoveryMode(false)} />;
   }
 
   if (!session) {

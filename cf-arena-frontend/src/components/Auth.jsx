@@ -11,6 +11,7 @@ export default function Auth({ onSession }) {
   const [lastName, setLastName] = useState('');
   
   const [isLogin, setIsLogin] = useState(true);
+  const [isResetMode, setIsResetMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
@@ -62,6 +63,29 @@ export default function Auth({ onSession }) {
     }
   };
 
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    if (!email) {
+      setErrorMsg("Please enter your email address first.");
+      return;
+    }
+    setLoading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin
+      });
+      if (error) throw error;
+      setSuccessMsg("Password reset email sent! Please check your inbox.");
+      setIsResetMode(false);
+    } catch (e) {
+      setErrorMsg(e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 font-sans relative overflow-hidden z-0">
       <LiveBackground />
@@ -85,6 +109,24 @@ export default function Auth({ onSession }) {
             <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 transition-all shadow-lg shadow-blue-900/50">
               {loading ? <Loader2 className="animate-spin" size={20} /> : 'Verify Account'}
             </button>
+          </form>
+        ) : isResetMode ? (
+          <form onSubmit={handlePasswordReset} className="space-y-4">
+            <div>
+              <label className="block text-slate-400 text-sm mb-1 font-medium">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 text-slate-500" size={18} />
+                <input required type="email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full glass-panel border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-white outline-none focus:border-blue-500 transition-colors" placeholder="you@example.com" />
+              </div>
+            </div>
+            <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 mt-4 transition-all shadow-lg shadow-blue-900/50">
+              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Send Reset Link'}
+            </button>
+            <p className="text-center mt-4">
+              <button type="button" onClick={() => { setIsResetMode(false); setErrorMsg(''); setSuccessMsg(''); }} className="text-slate-400 font-medium hover:text-white transition-colors text-sm">
+                Back to Login
+              </button>
+            </p>
           </form>
         ) : (
           <form onSubmit={handleAuth} className="space-y-4">
@@ -120,6 +162,14 @@ export default function Auth({ onSession }) {
             <button type="submit" disabled={loading} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 mt-6 transition-all shadow-lg shadow-blue-900/50">
               {loading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? 'Sign In Securely' : 'Create Account')}
             </button>
+
+            {isLogin && (
+              <div className="text-right mt-2">
+                <button type="button" onClick={() => { setIsResetMode(true); setErrorMsg(''); setSuccessMsg(''); }} className="text-sm text-slate-400 hover:text-white transition-colors">
+                  Forgot Password?
+                </button>
+              </div>
+            )}
             
             <p className="text-center text-slate-400 text-sm mt-6">
               {isLogin ? "Don't have an account? " : "Already have an account? "}
