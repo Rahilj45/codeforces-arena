@@ -23,10 +23,11 @@ const redisOptions = { maxRetriesPerRequest: null };
 if (redisUrl.startsWith('rediss://')) {
     redisOptions.tls = { rejectUnauthorized: false };
 }
-const redisConnection = new IORedis(redisUrl, redisOptions);
+
+const createRedisConnection = () => new IORedis(redisUrl, redisOptions);
 
 const verificationQueue = new Queue('cf-verification', {
-    connection: redisConnection,
+    connection: createRedisConnection(),
     defaultJobOptions: { attempts: 5, backoff: { type: 'exponential', delay: 5000 }, removeOnComplete: true, removeOnFail: 100 }
 });
 
@@ -78,10 +79,10 @@ const verificationWorker = new Worker('cf-verification', async (job) => {
         return { success: false, reason: `No 'OK' verdict found for ${problemId}.`, handle, roomId, problemId };
     }
 
-}, { connection: redisConnection, concurrency: 1, limiter: { max: 1, duration: 1500 } });
+}, { connection: createRedisConnection(), concurrency: 1, limiter: { max: 1, duration: 1500 } });
 
 
-const queueEvents = new QueueEvents('cf-verification', { connection: redisConnection });
+const queueEvents = new QueueEvents('cf-verification', { connection: createRedisConnection() });
 
 queueEvents.on('completed', ({ jobId, returnvalue }) => {
     let result = returnvalue;
