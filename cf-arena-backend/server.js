@@ -22,6 +22,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const rawRedisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 let redisUrl = rawRedisUrl.replace(/^["']|["']$/g, '').trim();
 
+// Strip accidental 'REDIS_URL=' prefix if user pasted the entire key=value into the value field
+redisUrl = redisUrl.replace(/^REDIS_URL=/i, '');
+
 // Fix double/triple slashes in protocol because of bad copy-paste (e.g. redis:////default...)
 redisUrl = redisUrl.replace(/^(rediss?:\/\/)\/+(.*)/i, '$1$2');
 
