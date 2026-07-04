@@ -111,9 +111,13 @@ export default function LinkCodeforces({ onLinked, onSkip }) {
           <Link size={32} />
         </div>
         <h2 className="text-2xl font-bold text-white mb-2">Link Codeforces</h2>
-        <p className="text-slate-400 mb-8 text-sm">
+        <p className="text-slate-400 mb-4 text-sm">
           To play in the Arena, you need to verify your Codeforces account.
         </p>
+
+        <div className="bg-amber-900/30 text-amber-400/90 p-3 rounded-lg mb-6 border border-amber-700/50 text-xs text-left">
+          <strong>Note:</strong> Since the backend is hosted on Render's free tier, it may take 50s - 1m to wake up. If you see "Site not reached" or get an error, please be patient and try refreshing the page 1-2 times.
+        </div>
 
         {errorMsg && (
           <div className="bg-red-900/50 text-red-400 p-3 rounded-lg mb-6 border border-red-800 text-sm text-left flex items-start gap-2">
