@@ -372,9 +372,12 @@ io.on('connection', (socket) => {
     socket.on('start_game', async ({ roomId, minRating, maxRating, timeLimit, numProblems }) => {
         const room = activeRooms[roomId];
         if (!room || room.host !== socket.handle) return;
+        if (room.isStarting) return; // Prevent multiple simultaneous starts
         if (room.players.length < 2) {
             return io.to(roomId).emit('error', { message: 'You need at least 2 players to start a tournament!' });
         }
+        
+        room.isStarting = true;
         try {
             const num = parseInt(numProblems) || 1;
             const problems = await getUniqueRoomProblems(room.players, minRating, maxRating, num);
@@ -388,6 +391,7 @@ io.on('connection', (socket) => {
             io.to(roomId).emit('match_starting', { countdown: 3 });
 
             setTimeout(() => {
+                room.isStarting = false;
                 room.activeProblems = activeProblems;
                 room.endTime = endTime;
                 room.timeLimit = timeLimit;
@@ -402,6 +406,7 @@ io.on('connection', (socket) => {
                 }, durationMs);
             }, 3000);
         } catch (error) {
+            room.isStarting = false;
             io.to(roomId).emit('error', { message: error.message });
         }
     });
