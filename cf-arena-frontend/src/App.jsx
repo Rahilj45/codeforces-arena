@@ -170,8 +170,10 @@ function App() {
       }
       if (data.handle === handleRef.current) {
         playSound('solve_own');
+        toast.success('You verified the problem successfully!');
       } else {
         playSound('solve_opp');
+        toast.info(`${data.handle} solved a problem!`);
       }
     });
 
@@ -640,6 +642,17 @@ function App() {
                             {isSolvedByMe && (
                               <div className="w-full flex items-center justify-center bg-emerald-900/40 text-emerald-400 font-semibold py-3 rounded-xl border border-emerald-800">
                                 <CheckCircle className="mr-2" size={18} /> Solved
+                              </div>
+                            )}
+                            
+                            {/* Opponent solve indicators */}
+                            {roomData.players.filter(p => p !== handle && (roomData.scoreboard[p] || []).includes(problem.problemId)).length > 0 && (
+                              <div className="flex flex-wrap justify-center gap-2 mt-2">
+                                {roomData.players.filter(p => p !== handle && (roomData.scoreboard[p] || []).includes(problem.problemId)).map(p => (
+                                  <span key={p} className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded-md border border-slate-700">
+                                    Solved by <span className="text-blue-400 font-medium">{p}</span>
+                                  </span>
+                                ))}
                               </div>
                             )}
                           </div>
