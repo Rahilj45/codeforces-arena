@@ -487,4 +487,73 @@ io.on('connection', (socket) => {
     });
 });
 
+const verificationTokens = {};
+
+app.post('/api/verify-handle-start', (req, res) => {
+    const { handle } = req.body;
+    if (!handle) return res.status(400).json({ error: "Handle required" });
+    
+    const token = 'arena_' + Math.random().toString(36).substring(2, 8).toLowerCase();
+    verificationTokens[handle] = token;
+    
+    res.json({ handle, token });
+});
+
+app.post('/api/verify-handle-check', async (req, res) => {
+    const { handle } = req.body;
+    if (!handle) return res.status(400).json({ error: "Handle required" });
+    
+    const token = verificationTokens[handle];
+    if (!token) return res.status(400).json({ error: "No verification started for this handle" });
+
+    try {
+        const response = await fetch(`https://codeforces.com/api/user.info?handles=${handle}`);
+        if (!response.ok) {
+            return res.status(400).json({ error: "Codeforces API error. Make sure the handle exists." });
+        }
+        const data = await response.json();
+        
+        if (data.status === 'OK' && data.result && data.result.length > 0) {
+            const user = data.result[0];
+            const firstName = user.firstName || "";
+            const lastName = user.lastName || "";
+            
+            if (firstName.includes(token) || lastName.includes(token)) {
+                // Ensure no other user has this handle
+                try {
+                    let page = 1;
+                    let hasMore = true;
+                    while (hasMore) {
+                        const { data: { users }, error } = await supabase.auth.admin.listUsers({ page, perPage: 100 });
+                        if (error) throw error;
+                        if (!users || users.length === 0) {
+                            hasMore = false;
+                        } else {
+                            for (const u of users) {
+                                if (u.user_metadata?.cf_handle && u.user_metadata.cf_handle.toLowerCase() === handle.toLowerCase()) {
+                                    return res.json({ success: false, error: "This Codeforces handle is already linked to another account." });
+                                }
+                            }
+                            if (users.length < 100) hasMore = false;
+                            page++;
+                        }
+                    }
+                } catch (dbError) {
+                    console.error("DB Error checking users:", dbError);
+                    // allow pass-through if DB fetch fails just in case, or fail? Let's fail secure.
+                    return res.status(500).json({ error: "Failed to check handle uniqueness. Please try again." });
+                }
+
+                delete verificationTokens[handle];
+                return res.json({ success: true });
+            } else {
+                return res.json({ success: false, error: "Verification token not found in Codeforces First/Last Name." });
+            }
+        }
+        res.status(400).json({ error: "Invalid response from Codeforces" });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 server.listen(process.env.PORT || 3000, () => console.log('Backend running'));
