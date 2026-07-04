@@ -19,6 +19,35 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+// --- TEMPORARY AUTO-SEEDER ---
+setTimeout(async () => {
+    try {
+        console.log("Fetching top Codeforces users for Global Leaderboard...");
+        const res = await fetch('https://codeforces.com/api/user.ratedList?activeOnly=true');
+        const data = await res.json();
+        
+        if (data.status === 'OK') {
+            const topUsers = data.result.slice(0, 49);
+            console.log(`Seeding ${topUsers.length} dummy users into Supabase...`);
+            
+            const records = topUsers.map((u, i) => ({
+                cf_handle: u.handle,
+                arena_rating: 2000 + (50 - i) * 10,
+                wins: Math.floor(Math.random() * 50) + 10,
+                losses: Math.floor(Math.random() * 20),
+                last_synced: new Date().toISOString()
+            }));
+
+            const { error } = await supabase.from('users').upsert(records, { onConflict: 'cf_handle' });
+            if (error) console.error("Error seeding:", error);
+            else console.log("Successfully seeded database with global Codeforces users!");
+        }
+    } catch(e) {
+        console.error("Auto-seed failed:", e);
+    }
+}, 5000);
+// -----------------------------
+
 const rawRedisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 let redisUrl = rawRedisUrl.replace(/^["']|["']$/g, '').trim();
 
