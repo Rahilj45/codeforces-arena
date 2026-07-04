@@ -117,7 +117,17 @@ queueEvents.on('completed', ({ jobId, returnvalue }) => {
         
         if (room) {
             if (!room.scoreboard[handle]) room.scoreboard[handle] = [];
-            if (!room.scoreboard[handle].includes(problemId)) {
+            
+            // Check if anyone has already solved this problem (Lockout logic)
+            let alreadySolved = false;
+            for (const p of room.players) {
+                if ((room.scoreboard[p] || []).includes(problemId)) {
+                    alreadySolved = true;
+                    break;
+                }
+            }
+
+            if (!alreadySolved && !room.scoreboard[handle].includes(problemId)) {
                 room.scoreboard[handle].push(problemId);
 
                 // Reset global timer for the room
@@ -129,8 +139,12 @@ queueEvents.on('completed', ({ jobId, returnvalue }) => {
                         handleTimeUp(room, roomId);
                     }, durationMs);
                 }
+                
+                io.to(roomId).emit('problem_solved', { handle, problemId, timestamp, scoreboard: room.scoreboard, newEndTime: room.endTime });
+            } else if (alreadySolved && !room.scoreboard[handle].includes(problemId)) {
+                // If already solved by someone else, notify this user that they were too late
+                io.to(roomId).emit('verification_failed', { handle, problemId, reason: 'Too late! An opponent already solved this problem.' });
             }
-            io.to(roomId).emit('problem_solved', { handle, problemId, timestamp, scoreboard: room.scoreboard, newEndTime: room.endTime });
             
             if (room.activeProblems && room.scoreboard[handle].length === room.activeProblems.length) {
                 if (room.timer) clearTimeout(room.timer);
@@ -144,6 +158,8 @@ queueEvents.on('completed', ({ jobId, returnvalue }) => {
         io.to(roomId).emit('verification_failed', { handle, problemId, reason });
     }
 });
+
+
 
 queueEvents.on('failed', async ({ jobId, failedReason }) => {
     const job = await verificationQueue.getJob(jobId);
