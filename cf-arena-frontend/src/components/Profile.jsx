@@ -34,18 +34,22 @@ export default function Profile({ backendUrl, handle }) {
         const res = await fetch(`${backendUrl}/api/profile/${queryHandle}`);
         const d = await res.json();
         
-        if (!d.user && queryHandle === handle) {
-          // If the user's own profile is missing from the DB, auto-sync it!
-          await fetch(`${backendUrl}/api/user/sync`, {
+        if (!d.user) {
+          // If the profile is missing from the DB, try to auto-sync it from Codeforces!
+          const syncRes = await fetch(`${backendUrl}/api/user/sync`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cf_handle: handle })
+            body: JSON.stringify({ cf_handle: queryHandle })
           });
           
-          // Re-fetch after sync
-          const res2 = await fetch(`${backendUrl}/api/profile/${queryHandle}`);
-          const d2 = await res2.json();
-          setData(d2);
+          if (syncRes.ok) {
+            // Re-fetch after successful sync
+            const res2 = await fetch(`${backendUrl}/api/profile/${queryHandle}`);
+            const d2 = await res2.json();
+            setData(d2);
+          } else {
+            setData(d); // Handle doesn't exist on Codeforces either
+          }
         } else {
           setData(d);
         }
