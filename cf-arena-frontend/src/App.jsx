@@ -603,12 +603,16 @@ function App() {
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
               {problems.map((problem, idx) => {
                 const isSpectatorUser = (roomData.spectators || []).includes(handle);
-                const solvedCount = (roomData.scoreboard[handle] || []).length;
+                // Unlock the next problem if anyone in the room has solved the current one
+                const totalSolvedInRoom = problems.filter(p => roomData.players.some(player => (roomData.scoreboard[player] || []).includes(p.problemId))).length;
+                const solvedCount = Math.max((roomData.scoreboard[handle] || []).length, totalSolvedInRoom);
                 
                 // Hide problems that the user hasn't unlocked yet
                 if (!isSpectatorUser && idx > solvedCount) return null;
 
                 const isSolvedByMe = (roomData.scoreboard[handle] || []).includes(problem.problemId);
+                const opponentSolvers = roomData.players.filter(p => p !== handle && (roomData.scoreboard[p] || []).includes(problem.problemId));
+                const isSolvedByOpponent = opponentSolvers.length > 0;
                 const isVerifying = verifyingStatus[`${handle}-${problem.problemId}`];
                 
                 return (
@@ -634,8 +638,8 @@ function App() {
                             </a>
                             
                             {gameState === 'playing' && !isSolvedByMe && !isSpectatorUser && (
-                              <button onClick={() => claimSolve(problem.problemId)} disabled={isVerifying} className="w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-900 text-white font-semibold py-3 rounded-xl transition-colors shadow">
-                                {isVerifying ? <><Loader2 className="mr-2 animate-spin" size={18} /> Verifying...</> : 'Verify Solve'}
+                              <button onClick={() => claimSolve(problem.problemId)} disabled={isVerifying || isSolvedByOpponent} className="w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 disabled:text-slate-500 text-white font-semibold py-3 rounded-xl transition-colors shadow">
+                                {isVerifying ? <><Loader2 className="mr-2 animate-spin" size={18} /> Verifying...</> : (isSolvedByOpponent ? 'Locked (Solved by Opponent)' : 'Verify Solve')}
                               </button>
                             )}
 
