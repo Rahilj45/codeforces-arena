@@ -22,12 +22,23 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const rawRedisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
 let redisUrl = rawRedisUrl.replace(/^["']|["']$/g, '').trim();
 
+// Fix double/triple slashes in protocol because of bad copy-paste (e.g. redis:////default...)
+redisUrl = redisUrl.replace(/^(rediss?:\/\/)\/+(.*)/i, '$1$2');
+
 if (redisUrl.startsWith('//')) {
     redisUrl = 'rediss:' + redisUrl;
 }
 
 const redisOptions = { maxRetriesPerRequest: null };
-if (redisUrl.startsWith('rediss://') || redisUrl.includes('upstash.io')) {
+
+if (redisUrl.includes('upstash.io')) {
+    // Upstash requires TLS, so ensure the protocol is rediss://
+    redisUrl = redisUrl.replace(/^redis:\/\//i, 'rediss://');
+    if (!redisUrl.startsWith('rediss://')) {
+        redisUrl = 'rediss://' + redisUrl.replace(/^(?:rediss?:\/\/)?/, '');
+    }
+    redisOptions.tls = { rejectUnauthorized: false };
+} else if (redisUrl.startsWith('rediss://')) {
     redisOptions.tls = { rejectUnauthorized: false };
 }
 
