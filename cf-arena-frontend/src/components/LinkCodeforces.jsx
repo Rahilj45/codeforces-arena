@@ -69,6 +69,17 @@ export default function LinkCodeforces({ onLinked, onSkip }) {
         });
         if (error) throw error;
         
+        // Sync user to ensure they are added to the public 'users' table for the leaderboard
+        try {
+          await fetch(`${backendUrl}/api/user/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cf_handle: handle })
+          });
+        } catch (e) {
+          console.error("Failed to sync user:", e);
+        }
+        
         onLinked(handle);
       } else {
         throw new Error(data.error || "Verification failed. Token not found.");
