@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabase';
-import { Link, Loader2, CheckCircle, Copy, AlertCircle } from 'lucide-react';
+import { Link, Loader2, CheckCircle, Copy, AlertCircle, X } from 'lucide-react';
 
 const rawBackendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 const BACKEND_URL = rawBackendUrl.startsWith('http') ? rawBackendUrl : `https://${rawBackendUrl}`;
 
-export default function LinkCodeforces({ onLinked }) {
+export default function LinkCodeforces({ onLinked, onSkip }) {
   const [step, setStep] = useState(1);
   const [handle, setHandle] = useState('');
   const [token, setToken] = useState('');
@@ -85,7 +85,16 @@ export default function LinkCodeforces({ onLinked }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans relative">
+      {onSkip && (
+        <button 
+          onClick={onSkip} 
+          className="absolute top-4 right-4 md:top-8 md:right-8 text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-2 rounded-full transition-colors z-50 shadow-lg"
+          title="Skip for now"
+        >
+          <X size={24} />
+        </button>
+      )}
       <div className="bg-slate-900/40 backdrop-blur-sm border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-md w-full text-center">
         <div className="bg-blue-600/20 text-blue-400 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
           <Link size={32} />
@@ -111,6 +120,15 @@ export default function LinkCodeforces({ onLinked }) {
             <button type="submit" disabled={loading || !handle.trim()} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 mt-6 transition-all disabled:bg-slate-700">
               {loading ? <Loader2 className="animate-spin" size={20} /> : 'Continue'}
             </button>
+            {onSkip && (
+              <button 
+                type="button" 
+                onClick={onSkip}
+                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-lg transition-colors mt-3"
+              >
+                Skip for now
+              </button>
+            )}
           </form>
         ) : (
           <div className="text-left space-y-4">

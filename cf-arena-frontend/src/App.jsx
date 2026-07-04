@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
-import { Play, LogIn, ExternalLink, Loader2, Trophy, Clock, Users, CheckCircle, Lock, Unlock, Send, Globe, LogOut } from 'lucide-react';
+import { Play, LogIn, ExternalLink, Loader2, Trophy, Clock, Users, CheckCircle, Lock, Unlock, Send, Globe, LogOut, Link } from 'lucide-react';
 import Leaderboard from './components/Leaderboard';
 import Profile from './components/Profile';
 import Auth from './components/Auth';
@@ -343,7 +343,10 @@ function App() {
   }
 
   if (needsCFLink) {
-    return <LinkCodeforces onLinked={(h) => { setHandle(h); setNeedsCFLink(false); checkSavedRoom(h); }} />;
+    return <LinkCodeforces 
+      onLinked={(h) => { setHandle(h); setNeedsCFLink(false); checkSavedRoom(h); }} 
+      onSkip={() => setNeedsCFLink(false)} 
+    />;
   }
 
   return (
@@ -360,6 +363,13 @@ function App() {
           <button onClick={() => setActiveTab('arena')} className={`px-4 py-2 rounded-md font-bold transition-all ${activeTab === 'arena' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>Arena</button>
           <button onClick={() => setActiveTab('leaderboard')} className={`px-4 py-2 rounded-md font-bold transition-all ${activeTab === 'leaderboard' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>Leaderboard</button>
           <button onClick={() => setActiveTab('profile')} className={`px-4 py-2 rounded-md font-bold transition-all ${activeTab === 'profile' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>Profile</button>
+          
+          {!handle && (
+            <button onClick={() => setNeedsCFLink(true)} className="px-4 py-2 rounded-md font-bold text-emerald-400 hover:text-emerald-300 hover:bg-emerald-900/30 flex items-center transition-all ml-2">
+              <Link size={16} className="mr-1" /> Link CF
+            </button>
+          )}
+
           <button onClick={handleLogout} className="px-4 py-2 rounded-md font-bold text-red-400 hover:text-red-300 hover:bg-red-900/30 flex items-center transition-all ml-2">
             <LogOut size={16} className="mr-1" /> Logout
           </button>
