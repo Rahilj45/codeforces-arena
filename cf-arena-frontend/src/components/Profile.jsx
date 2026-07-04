@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { User, Activity, Swords } from 'lucide-react';
+import { User, Activity, Swords, Unplug, Loader2 } from 'lucide-react';
+import { supabase } from '../supabase';
 
 export default function Profile({ backendUrl, handle }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [searchHandle, setSearchHandle] = useState(handle || '');
   const [queryHandle, setQueryHandle] = useState(handle || '');
+  const [unlinking, setUnlinking] = useState(false);
+
+  const handleUnlink = async () => {
+    if (window.confirm("Are you sure you want to unlink your Codeforces handle? You will need to verify a new one to play.")) {
+      setUnlinking(true);
+      try {
+        await supabase.auth.updateUser({ data: { cf_handle: null } });
+        window.location.reload();
+      } catch (e) {
+        console.error(e);
+        setUnlinking(false);
+      }
+    }
+  };
 
   useEffect(() => {
     if (!queryHandle) {
@@ -79,6 +94,17 @@ export default function Profile({ backendUrl, handle }) {
                 </span>
               </div>
             </div>
+            
+            {queryHandle === handle && (
+              <button 
+                onClick={handleUnlink}
+                disabled={unlinking}
+                className="w-full mt-6 bg-red-900/30 hover:bg-red-600 border border-red-800 hover:border-red-500 text-red-400 hover:text-white px-4 py-3 rounded-lg font-bold transition-all flex justify-center items-center gap-2"
+              >
+                {unlinking ? <Loader2 className="animate-spin" size={20} /> : <Unplug size={20} />}
+                Unlink Codeforces Handle
+              </button>
+            )}
           </div>
 
           {/* Match History */}
