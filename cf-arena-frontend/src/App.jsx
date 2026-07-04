@@ -27,6 +27,8 @@ function App() {
   const [roomName, setRoomName] = useState('');
   const [password, setPassword] = useState('');
   const [gameState, setGameState] = useState('join'); 
+  const [isJoining, setIsJoining] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [roomData, setRoomData] = useState({ host: '', players: [], scoreboard: {}, isPrivate: false });
   const [problems, setProblems] = useState([]);
   
@@ -118,6 +120,7 @@ function App() {
     socket.on('room_state_update', (data) => {
       setRoomData({ roomName: data.roomName, host: data.host, players: data.players, spectators: data.spectators || [], scoreboard: data.scoreboard || {}, isPrivate: data.isPrivate });
       setGameState(prev => prev === 'join' ? 'lobby' : prev);
+      setIsJoining(false);
     });
 
     socket.on('match_starting', (data) => {
@@ -140,6 +143,7 @@ function App() {
       setProblems(data.problems);
       setEndTime(data.endTime);
       setGameState('playing');
+      setIsStarting(false);
       setWinnerMessage(null);
       setVerifyingStatus({});
       playSound('start');
@@ -192,6 +196,8 @@ function App() {
     });
 
     socket.on('error', (err) => {
+      setIsJoining(false);
+      setIsStarting(false);
       toast.error(err.message);
     });
 
@@ -246,6 +252,7 @@ function App() {
       } else {
         localStorage.removeItem('arena_password');
       }
+      setIsJoining(true);
       socket.emit('join_room', { roomId: targetRoomId, roomName: targetRoomName, handle, password, isSpectator });
     } else {
       toast.error("Please enter your Codeforces Handle first!");
@@ -284,6 +291,7 @@ function App() {
       toast.error("Minimum 2 players required to start a tournament!");
       return;
     }
+    setIsStarting(true);
     socket.emit('start_game', { roomId, minRating, maxRating, timeLimit, numProblems });
   };
 
@@ -406,8 +414,8 @@ function App() {
                   <label htmlFor="spectatorMode" className="text-sm font-medium text-slate-300">Join as Spectator</label>
                 </div>
               )}
-              <button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-lg transition-colors mt-4 shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] relative z-10">
-                {joinTab === 'create' ? 'Create Arena' : 'Join Arena'}
+              <button type="submit" disabled={isJoining} className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors mt-4 shadow-[0_0_20px_rgba(37,99,235,0.4)] hover:shadow-[0_0_30px_rgba(37,99,235,0.6)] relative z-10 flex items-center justify-center">
+                {isJoining ? <Loader2 className="animate-spin" size={20} /> : (joinTab === 'create' ? 'Create Arena' : 'Join Arena')}
               </button>
             </form>
             </div>
@@ -515,9 +523,9 @@ function App() {
                 </div>
               </div>
               
-              <button onClick={startGame} disabled={!isHost} className="w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg">
-                <Play className="mr-2" size={18} />
-                {isHost ? 'Start Match' : 'Waiting for host...'}
+              <button onClick={startGame} disabled={!isHost || isStarting} className="w-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-lg">
+                {isStarting ? <Loader2 className="animate-spin" size={18} /> : <Play className="mr-2" size={18} />}
+                {isStarting ? 'Starting...' : (isHost ? 'Start Match' : 'Waiting for host...')}
                   </button>
                 </div>
               </div>
