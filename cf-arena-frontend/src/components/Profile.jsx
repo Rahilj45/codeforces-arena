@@ -28,11 +28,36 @@ export default function Profile({ backendUrl, handle }) {
       return;
     }
     setLoading(true);
-    fetch(`${backendUrl}/api/profile/${queryHandle}`)
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
-      .catch(e => { console.error(e); setLoading(false); });
-  }, [backendUrl, queryHandle]);
+    
+    const fetchProfile = async () => {
+      try {
+        const res = await fetch(`${backendUrl}/api/profile/${queryHandle}`);
+        const d = await res.json();
+        
+        if (!d.user && queryHandle === handle) {
+          // If the user's own profile is missing from the DB, auto-sync it!
+          await fetch(`${backendUrl}/api/user/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cf_handle: handle })
+          });
+          
+          // Re-fetch after sync
+          const res2 = await fetch(`${backendUrl}/api/profile/${queryHandle}`);
+          const d2 = await res2.json();
+          setData(d2);
+        } else {
+          setData(d);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProfile();
+  }, [backendUrl, queryHandle, handle]);
 
   return (
     <div className="max-w-4xl mx-auto p-6 mt-10">
