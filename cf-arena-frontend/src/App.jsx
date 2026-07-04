@@ -13,7 +13,8 @@ import TiltCard from './components/TiltCard';
 import { playSound } from './utils/sounds';
 import UpdatePassword from './components/UpdatePassword';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+const rawBackendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+const BACKEND_URL = rawBackendUrl.startsWith('http') ? rawBackendUrl : `https://${rawBackendUrl}`;
 const socket = io(BACKEND_URL);
 
 function App() {

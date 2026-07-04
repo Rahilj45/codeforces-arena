@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { supabase } from '../supabase';
 import { Link, Loader2, CheckCircle, Copy, AlertCircle } from 'lucide-react';
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+const rawBackendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+const BACKEND_URL = rawBackendUrl.startsWith('http') ? rawBackendUrl : `https://${rawBackendUrl}`;
 
 export default function LinkCodeforces({ onLinked }) {
   const [step, setStep] = useState(1);
@@ -22,7 +23,13 @@ export default function LinkCodeforces({ onLinked }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ handle })
       });
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error('Backend is waking up or unavailable. Please try again in 30 seconds.');
+      }
       
       if (!res.ok) throw new Error(data.error || 'Failed to start verification.');
 
@@ -45,7 +52,13 @@ export default function LinkCodeforces({ onLinked }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ handle })
       });
-      const data = await res.json();
+      const contentType = res.headers.get("content-type");
+      let data = {};
+      if (contentType && contentType.includes("application/json")) {
+        data = await res.json();
+      } else {
+        throw new Error('Backend is waking up or unavailable. Please try again in 30 seconds.');
+      }
       
       if (!res.ok) throw new Error(data.error || 'Verification check failed.');
       
