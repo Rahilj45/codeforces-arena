@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
+const fetch = require('node-fetch');
 const { getUniqueRoomProblems } = require('./utils/problemSelector');
 const { Queue, Worker, QueueEvents } = require('bullmq');
 const IORedis = require('ioredis');
