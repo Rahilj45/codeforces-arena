@@ -239,17 +239,23 @@ async function processMatchResult(room, winnerHandle) {
         
         if (!users) return;
 
-        for (const u of users) {
+        const existingUsers = users || [];
+
+        for (const playerHandle of room.players) {
+            const u = existingUsers.find(user => user.cf_handle === playerHandle) || { cf_handle: playerHandle, arena_rating: 800, wins: 0, losses: 0 };
+            
             if (u.cf_handle === winnerHandle) {
-                await supabase.from('users').update({
+                await supabase.from('users').upsert({
+                    cf_handle: u.cf_handle,
                     arena_rating: (u.arena_rating || 800) + 20,
                     wins: (u.wins || 0) + 1
-                }).eq('cf_handle', u.cf_handle);
+                }, { onConflict: 'cf_handle' });
             } else {
-                await supabase.from('users').update({
+                await supabase.from('users').upsert({
+                    cf_handle: u.cf_handle,
                     arena_rating: Math.max(0, (u.arena_rating || 800) - 10),
                     losses: (u.losses || 0) + 1
-                }).eq('cf_handle', u.cf_handle);
+                }, { onConflict: 'cf_handle' });
             }
         }
     } catch (e) {
