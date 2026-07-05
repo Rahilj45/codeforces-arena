@@ -12,6 +12,7 @@ import LiveBackground from './components/LiveBackground';
 import TiltCard from './components/TiltCard';
 import { playSound } from './utils/sounds';
 import UpdatePassword from './components/UpdatePassword';
+import { Analytics } from '@vercel/analytics/react';
 
 const rawBackendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
 const BACKEND_URL = rawBackendUrl.startsWith('http') ? rawBackendUrl : `https://${rawBackendUrl}`;
@@ -744,6 +745,7 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      <Analytics />
     </div>
   );
 }
